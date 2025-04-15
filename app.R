@@ -68,7 +68,8 @@ players <- data.frame(
                 74, 82)
 )
 
-# Añadir URLs de imágenes a los datos de jugadores
+#Add image URLs to player data
+
 players$image_url <- c(
   "https://img.chelseafc.com/image/upload/f_auto,h_860,q_50/editorial/people/first-team/2024-25/With%20LN/Sanchez/Mens_3333x5000_Avatar_Sanchez_SF_Home_24_25_RGB.png", # Sanchez
   "https://img.chelseafc.com/image/upload/f_auto,h_860,q_50/editorial/people/first-team/2024-25/With%20LN/Jorgensen/Mens_3333x5000_Avatar_Jorgensen_SF_Home_24_25_RGB.png", # Jorgensen
@@ -92,9 +93,7 @@ players$image_url <- c(
   "https://img.chelseafc.com/image/upload/f_auto,h_860,q_50/editorial/people/first-team/2024-25/With%20LN/Jackson/Mens_3333x5000_Avatar_Jackson_SF_Home_24_25_RGB.png"  # Jackson
 )
 
-# 2. GPS Data (for one player as example, will be expanded to all players)
-# Generate 30 dates from Aug 1, 2024 to current date
-# Make sure to use as.Date for all date elements
+# 2. GPS Data 
 start_date <- as.Date("2024-08-01")
 end_date <- Sys.Date()
 dates <- seq(start_date, end_date, length.out = 30)
@@ -363,8 +362,6 @@ recovery_wide <- recovery_data %>%
 # Verify that we have sufficient data
 cat("Physical data rows:", nrow(physical_data), "\n")
 cat("Recovery data rows:", nrow(recovery_data), "\n")
-
-#PART 2
 
 # UI Definition for the Chelsea FC Performance Dashboard
 
@@ -708,8 +705,6 @@ ui <- dashboardPage(
   )
 )
 
-#PART 3
-
 # Server function for the Chelsea FC Performance Dashboard
 server <- function(input, output, session) {
   
@@ -801,12 +796,11 @@ server <- function(input, output, session) {
   })
   
   output$kpi_physical <- renderUI({
-    # Inicializar valores seguros
+    
     avg_benchmark <- 0
     trend_pct <- 0
     last_test_date <- "No data"
     
-    # Intentar obtener datos solo si no genera errores
     tryCatch({
       # Get most recent physical data
       recent_physical <- player_physical_data()
@@ -839,13 +833,11 @@ server <- function(input, output, session) {
         }
       }
     }, error = function(e) {
-      # En caso de cualquier error, usar los valores predeterminados
       avg_benchmark <<- 0
       trend_pct <<- 0
       last_test_date <<- "No data"
     })
     
-    # Garantizar que los valores son seguros para mostrar
     avg_benchmark_display <- tryCatch({
       as.character(round(avg_benchmark))
     }, error = function(e) {
@@ -858,11 +850,9 @@ server <- function(input, output, session) {
       "0"
     })
     
-    # Determinar clases CSS y iconos
     trend_class <- ifelse(trend_pct > 0, "value-up", "value-down")
     trend_icon <- ifelse(trend_pct > 0, icon("arrow-up"), icon("arrow-down"))
     
-    # Construir la interfaz de usuario
     div(
       p(class = "indicator-value", paste0(avg_benchmark_display, "%"),
         span(class = trend_class, paste0(" ", trend_display, "%"), trend_icon)),
@@ -872,13 +862,12 @@ server <- function(input, output, session) {
   })
   
   output$kpi_recovery <- renderUI({
-    # Inicializar valores seguros
+    
     emboss_score <- 0
     trend_pct <- 0
     update_date <- "No data"
     has_data <- FALSE
     
-    # Intentar obtener datos solo si no genera errores
     tryCatch({
       # Get most recent recovery data
       recent_recovery <- recovery_data %>%
@@ -918,7 +907,7 @@ server <- function(input, output, session) {
         }
       }
     }, error = function(e) {
-      # En caso de cualquier error, usar los valores predeterminados
+      # In case of any error, use the default values
       emboss_score <<- 0
       trend_pct <<- 0
       update_date <<- "No data"
@@ -926,7 +915,6 @@ server <- function(input, output, session) {
     })
     
     if(has_data) {
-      # Garantizar que los valores son seguros para mostrar
       emboss_display <- tryCatch({
         paste0(ifelse(emboss_score > 0, "+", ""), round(emboss_score))
       }, error = function(e) {
@@ -939,7 +927,6 @@ server <- function(input, output, session) {
         "0"
       })
       
-      # Determinar clases CSS e iconos
       trend_class <- ifelse(trend_pct > 0, "value-up", "value-down")
       trend_icon <- ifelse(trend_pct > 0, icon("arrow-up"), icon("arrow-down"))
       
@@ -953,7 +940,6 @@ server <- function(input, output, session) {
         ""
       })
       
-      # Construir la interfaz de usuario
       div(
         p(class = paste("indicator-value", status_class), 
           paste0(emboss_display, "%"),
@@ -989,9 +975,6 @@ server <- function(input, output, session) {
           type = 'scatter',
           mode = 'lines+markers',
           x = recent$date,
-          
-          #PART 3.b
-          
           y = recent$distance_over_21,
           name = 'High-Speed Distance (>21 km/h)',
           yaxis = 'y2',
@@ -1319,8 +1302,6 @@ server <- function(input, output, session) {
     }
   })
   
-  #PART 4
-  
   # Acceleration/Deceleration Profile
   output$accel_decel_profile <- renderPlotly({
     player_data <- player_gps_data()
@@ -1641,7 +1622,6 @@ server <- function(input, output, session) {
         latest_date <- max(player_data$date, na.rm = TRUE)
         latest_data <- player_data %>% filter(date == latest_date)
         
-        # Solo si tenemos datos suficientes, procesamos
         if(nrow(latest_data) >= 5) {
           # Calculate average by expression type and quality
           expression_summary <- latest_data %>%
@@ -1685,7 +1665,6 @@ server <- function(input, output, session) {
         }
       }
       
-      # Si llegamos aquí, usamos los datos por defecto
       date_title <- format(Sys.Date(), "%d %b %Y")
       
       p <- plot_ly() %>%
@@ -1717,7 +1696,6 @@ server <- function(input, output, session) {
       return(p)
       
     }, error = function(e) {
-      # En caso de cualquier error, mostrar datos por defecto
       p <- plot_ly() %>%
         add_trace(
           data = default_data %>% filter(expression == "Isometric"),
@@ -1754,7 +1732,6 @@ server <- function(input, output, session) {
       player_data <- player_physical_data()
       
       if (nrow(player_data) > 0) {
-        # Construir tabla manualmente para evitar errores
         dates_char <- sapply(player_data$date, function(d) {
           tryCatch({
             format(as.Date(d), "%d %b %Y")
@@ -1771,7 +1748,6 @@ server <- function(input, output, session) {
           })
         })
         
-        # Crear dataframe simple con solo caracteres
         display_data <- data.frame(
           "Test Date" = dates_char,
           "Movement" = as.character(player_data$movement),
@@ -1781,7 +1757,6 @@ server <- function(input, output, session) {
           stringsAsFactors = FALSE
         )
         
-        # Ordenar manualmente por fecha (descendente)
         sorted_data <- display_data[order(player_data$date, decreasing = TRUE),]
         
         datatable(
@@ -1791,7 +1766,7 @@ server <- function(input, output, session) {
             dom = "ftip",
             scrollX = TRUE
           ),
-          escape = FALSE,  # Permitir HTML en celdas si es necesario
+          escape = FALSE, 
           rownames = FALSE
         )
       } else {
@@ -1802,7 +1777,6 @@ server <- function(input, output, session) {
         )
       }
     }, error = function(e) {
-      # En caso de error, mostrar un mensaje
       datatable(
         data.frame(Message = "Error loading data. Please try again."),
         options = list(dom = "t"),
@@ -1810,10 +1784,6 @@ server <- function(input, output, session) {
       )
     })
   })
-  
-  #PART 5
-  
-  # Recovery Tab Outputs
   
   # Overall Recovery Status Trend
   output$recovery_trend <- renderPlotly({
@@ -1877,11 +1847,7 @@ server <- function(input, output, session) {
   })
   
   # Recovery Category Comparison
-  output$recovery_categories <- renderPlotly({
-    # Get the most recent recovery data for each category
-    
-    #PART 5.b
-    
+  output$recovery_categories <- renderPlotly({    
     recovery_data_composite <- recovery_data %>%
       filter(
         player_id == input$player,
@@ -1997,7 +1963,7 @@ server <- function(input, output, session) {
       } else if(percent_value <= -20) {
         chelsea_red
       } else {
-        "#FFA500"  # orange for neutral/caution
+        "#FFA500" 
       }
       
       p <- plot_ly() %>%
